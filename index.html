@@ -13,12 +13,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /*
-  Song ID prop for the Galaxy Z Fold 8.
+  Song ID prop for the Galaxy Z Fold 8 inner screen (2448 × 1848 px, landscape).
   Built from Figma "Shazam App - Open Screen" (jO4VrQnb9mAVd7SkmDKv9Y, 112:6024).
   Every size is in Figma px × --u, so the layout matches the frame at any screen size.
-  Landscape (inner screen, 2448 × 1848 px): two halves side by side, as in Figma.
-  Portrait (cover screen, 1248 × 1972 px): the red listen screen fills the display, then
-  shrinks to a band at the top when the song is found and the player rises beneath it.
+  Landscape: two halves side by side. Portrait / narrow: listen area on top, player below.
 */
 :root {
   --u: 1px;
@@ -59,6 +57,7 @@ svg { display: block; }
 
 /* ---------- listen half ---------- */
 .listen { position: relative; flex: 1 1 50%; background: var(--red); overflow: hidden; cursor: pointer; }
+.stacked .listen { flex: 0 0 40%; }
 .listen canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .logo {
   position: absolute; left: 50%; top: 50%;
@@ -70,11 +69,13 @@ svg { display: block; }
 
 /* ---------- player half ---------- */
 .player { position: relative; flex: 1 1 50%; background: var(--night); overflow: hidden; }
+.stacked .player { flex: 1 1 60%; }
 .stage {
   position: relative; height: 100%; width: calc(523 * var(--u)); margin: 0 auto;
   display: flex; flex-direction: column; align-items: center;
 }
 .sb-space { flex: 0 0 calc(44 * var(--u)); }
+.stacked .sb-space { flex-basis: calc(10 * var(--u)); }
 
 .hdr {
   flex: 0 0 auto; width: 100%; height: calc(40 * var(--u)); margin-top: calc(6 * var(--u));
@@ -152,39 +153,13 @@ svg { display: block; }
 .found .hint, .no-hint .hint { opacity: 0; }
 
 /* ---------- reveal choreography: title → play button → rest of the UI ---------- */
-.reveal { opacity: 0; transform: translateY(calc(18 * var(--u))); pointer-events: none; transition: opacity .35s ease, transform .35s ease; }
+.reveal { opacity: 0; transform: translateY(calc(18 * var(--u))); transition: opacity .35s ease, transform .35s ease; }
 .play.reveal { transform: scale(.35); }
 .found .reveal {
-  opacity: 1; transform: none; pointer-events: auto;
+  opacity: 1; transform: none;
   transition: opacity .7s ease var(--d, 0s), transform .8s cubic-bezier(.2, .9, .25, 1) var(--d, 0s);
 }
 .found .play.reveal { transition: opacity .45s ease var(--d), transform .7s cubic-bezier(.34, 1.7, .5, 1) var(--d); }
-
-/* ---------- portrait (cover screen): full-screen listen → red band over the player ---------- */
-.stacked .listen {
-  position: absolute; z-index: 2; top: 0; left: 0; right: 0; height: 100%;
-  transition: height .5s cubic-bezier(.55, 0, .7, .4);
-}
-.stacked.found .listen { height: var(--band); transition: height 1s cubic-bezier(.2, .85, .25, 1); }
-.stacked .player { position: absolute; top: var(--band); bottom: 0; left: 0; right: 0; }
-.stacked .sb-space { display: none; }
-.stacked .hdr {
-  position: fixed; z-index: 4; top: calc(44 * var(--u)); left: 0; right: 0; margin: 0;
-  padding: 0 max(0px, (100vw - 523 * var(--u)) / 2);
-}
-.stacked .hdr h2 { color: #fff; font-weight: 500; }
-.stacked .hdr .fav path { fill: rgba(255, 255, 255, .55); stroke: transparent; }
-.stacked .hdr .fav.on path { fill: #fff; stroke: #fff; }
-.stacked .card { flex-basis: calc(200 * var(--u)); margin-top: calc(28 * var(--u)); }
-.stacked .titles { margin-top: calc(26 * var(--u)); }
-.stacked .controls { padding-top: calc(20 * var(--u)); }
-.stacked .nav { margin-top: calc(24 * var(--u)); }
-.stacked .hint {
-  position: fixed; z-index: 3; inset: auto 0 calc(118 * var(--u)) 0;
-  font-size: calc(21 * var(--u)); font-weight: 500; color: rgba(255, 255, 255, .88);
-}
-/* the band shrinks first, then the player fills in */
-.app.stacked.found .reveal { transition-delay: calc(var(--d, 0s) + .45s); }
 </style>
 </head>
 <body>
@@ -298,29 +273,20 @@ svg { display: block; }
   $("#subtitle").textContent = SONG.subtitle;
 
   // ---------- layout: Figma px → screen via --u ----------
-  // Portrait budget in Figma px: red band 270 (status + header overlay + logo) + player 559 = 829.
-  const BAND = 270, PLAYER = 559;
-  let U = 1, W = 0, H = 0, dpr = 1, stacked = false;
+  let U = 1, W = 0, H = 0, dpr = 1;
   function fit() {
     const vw = innerWidth, vh = innerHeight;
-    stacked = vw < vh * 0.9;
+    const stacked = vw < vh * 0.9;
     app.classList.toggle("stacked", stacked);
-    U = stacked ? Math.min(vw / 523, vh / (BAND + PLAYER)) : Math.min(vw / 2 / 523, vh / 849);
-    const root = document.documentElement.style;
-    root.setProperty("--u", U + "px");
-    root.setProperty("--band", Math.max(BAND * U, vh - PLAYER * U) + "px");   // taller screens get a taller band
-    sizeCanvas();
-    placeLyric(false);
-  }
-  function sizeCanvas() {
+    U = stacked ? Math.min(vw / 523, (vh * 0.6) / 790) : Math.min(vw / 2 / 523, vh / 849);
+    document.documentElement.style.setProperty("--u", U + "px");
     const r = listenEl.getBoundingClientRect();
     dpr = Math.min(window.devicePixelRatio || 1, 3);
     W = r.width; H = r.height;
     canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
     dirty = true;
+    placeLyric(false);
   }
-  // the band animates its height on the cover screen, so keep the canvas matched to it
-  new ResizeObserver(sizeCanvas).observe(listenEl);
 
   // ---------- lyrics ----------
   // Rendered twice so the loop can scroll past the end and snap back invisibly.
@@ -377,7 +343,7 @@ svg { display: block; }
     state = "found";
     app.classList.add("found");
     // title → play button → rest of the UI, then the lyrics start
-    later(() => setPlaying(true), stacked ? 2400 : 1950);
+    later(() => setPlaying(true), 1950);
   }
   function reset() {
     timers.forEach(clearTimeout); timers = [];
@@ -389,7 +355,6 @@ svg { display: block; }
 
   listenEl.addEventListener("click", () => { if (state === "idle") listen(); });
   logo.addEventListener("click", e => { if (state !== "idle") { e.stopPropagation(); reset(); } });
-  $(".back").addEventListener("click", () => { if (state === "found") reset(); });
   playBtn.addEventListener("click", () => { if (state === "found") setPlaying(!playing); });
   $("#fav").addEventListener("click", e => e.currentTarget.classList.toggle("on"));
   addEventListener("keydown", e => {
@@ -411,9 +376,6 @@ svg { display: block; }
   const R0 = 168, GAP = 50, LINE = 5, LOGO_R = 89.5;  // Figma px
   const BEAT = 0.86;                                      // seconds per heartbeat
   let phase = 0, scale = 1, glow = 0, beatClock = 0, lastBeat = -1, shocks = [], dirty = true, prev = 0;
-  // band: 0 = full-screen listen, 1 = portrait band after the song is found (rings shrink, centre drops below the header)
-  const BAND_SHRINK = 0.38, BAND_DROP = 45;  // Figma px
-  let band = 0;
 
   // lub-dub envelope: quick swell then decay, second smaller beat 0.22 s later
   const env = x => x <= 0 ? 0 : (x / 0.075) * Math.exp(1 - x / 0.075);
@@ -441,21 +403,18 @@ svg { display: block; }
       if (Math.abs(scale - breathe) > 1e-4) { scale += (breathe - scale) * Math.min(1, dt * 8); dirty = true; }
       if (glow > 1e-3) { glow *= Math.max(0, 1 - dt * 5); dirty = true; } else glow = 0;
     }
-    const bandTo = stacked && state === "found" ? 1 : 0;
-    if (Math.abs(bandTo - band) > 1e-3) { band += (bandTo - band) * Math.min(1, dt * (bandTo ? 3.4 : 6)); dirty = true; }
-    else band = bandTo;
     if (shocks.length) dirty = true;
     if (phase > 1000) phase -= 1000;
 
     if (dirty) { draw(dt); dirty = false; }
-    logo.style.transform = `translateY(${(band * BAND_DROP * U).toFixed(2)}px) scale(${(scale * (1 - BAND_SHRINK * band)).toFixed(4)})`;
+    logo.style.transform = `scale(${scale.toFixed(4)})`;
     requestAnimationFrame(frame);
   }
 
   function draw(dt) {
-    const u = U * dpr * (1 - BAND_SHRINK * band), cx = canvas.width / 2, cy = canvas.height / 2 + band * BAND_DROP * U * dpr;
+    const u = U * dpr, cx = canvas.width / 2, cy = canvas.height / 2;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const maxR = Math.hypot(cx, Math.max(cy, canvas.height - cy)) + GAP * u;
+    const maxR = Math.hypot(cx, cy) + GAP * u;
 
     // soft glow behind the logo on each beat
     if (glow > 0.01) {
