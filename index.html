@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#141112">
+<title>Song ID Fold</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/*
+  Song ID prop for the Galaxy Z Fold 8 inner screen (2448 × 1848 px, landscape).
+  Built from Figma "Shazam App - Open Screen" (jO4VrQnb9mAVd7SkmDKv9Y, 112:6024).
+  Every size is in Figma px × --u, so the layout matches the frame at any screen size.
+  Landscape: two halves side by side. Portrait / narrow: listen area on top, player below.
+*/
+:root {
+  --u: 1px;
+  --red: #d43331;      /* listen half */
+  --ring: #861a21;     /* concentric rings */
+  --night: #141112;    /* player half */
+  --nav: #090909;
+  --accent: #e92626;   /* play button, active tab */
+  --ink: #f2f2f2;
+  --mute: #8e8e8e;
+  --lyric: #f6eaea;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--night); overflow: hidden; }
+body {
+  font-family: Inter, "Helvetica Neue", Roboto, Arial, sans-serif;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none; -webkit-user-select: none;
+  touch-action: manipulation;
+}
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; display: grid; place-items: center; }
+svg { display: block; }
+
+.app { position: fixed; inset: 0; display: flex; }
+.app.stacked { flex-direction: column; }
+
+/* ---------- status bar (spans both halves, as in Figma) ---------- */
+.status {
+  position: absolute; z-index: 5; top: 0; left: 0; right: 0;
+  height: calc(44 * var(--u)); padding: 0 calc(22 * var(--u)) 0 calc(20 * var(--u));
+  display: flex; align-items: center; justify-content: space-between; pointer-events: none;
+}
+.status .time { font-size: calc(14 * var(--u)); font-weight: 600; letter-spacing: .01em; }
+.status .icons { display: flex; align-items: center; gap: calc(5 * var(--u)); }
+.no-status .status { display: none; }
+
+/* ---------- listen half ---------- */
+.listen { position: relative; flex: 1 1 50%; background: var(--red); overflow: hidden; cursor: pointer; }
+.stacked .listen { flex: 0 0 40%; }
+.listen canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.logo {
+  position: absolute; left: 50%; top: 50%;
+  width: calc(179 * var(--u)); height: calc(179 * var(--u));
+  margin: calc(-89.5 * var(--u)) 0 0 calc(-89.5 * var(--u));
+  border-radius: 50%; will-change: transform;
+}
+.logo svg { width: 100%; height: 100%; filter: drop-shadow(0 0 calc(6 * var(--u)) rgba(90, 0, 0, .25)); }
+
+/* ---------- player half ---------- */
+.player { position: relative; flex: 1 1 50%; background: var(--night); overflow: hidden; }
+.stacked .player { flex: 1 1 60%; }
+.stage {
+  position: relative; height: 100%; width: calc(523 * var(--u)); margin: 0 auto;
+  display: flex; flex-direction: column; align-items: center;
+}
+.sb-space { flex: 0 0 calc(44 * var(--u)); }
+.stacked .sb-space { flex-basis: calc(10 * var(--u)); }
+
+.hdr {
+  flex: 0 0 auto; width: 100%; height: calc(40 * var(--u)); margin-top: calc(6 * var(--u));
+  display: grid; grid-template-columns: calc(54 * var(--u)) 1fr calc(54 * var(--u)); align-items: center;
+}
+.hdr h2 { text-align: center; font-size: calc(18 * var(--u)); font-weight: 400; color: #e4e4e4; letter-spacing: .01em; }
+.hdr .back svg { width: calc(22 * var(--u)); height: calc(22 * var(--u)); }
+.hdr .fav svg { width: calc(24 * var(--u)); height: calc(24 * var(--u)); }
+.hdr .fav path { fill: var(--mute); stroke: var(--mute); transition: fill .25s, stroke .25s; }
+.hdr .fav.on path { fill: var(--accent); stroke: var(--accent); }
+
+.card {
+  position: relative; flex: 0 0 calc(280 * var(--u)); width: calc(437 * var(--u)); margin-top: calc(55 * var(--u));
+  border-radius: calc(18 * var(--u)); overflow: hidden;
+  background: linear-gradient(180deg, #ca0915 0%, #a10913 30%, #6e0b12 62%, #3a0d10 84%, #2a0d10 100%);
+}
+.card .label {
+  position: absolute; top: calc(19 * var(--u)); left: 0; right: 0; text-align: center;
+  font-size: calc(18 * var(--u)); line-height: calc(22 * var(--u)); font-weight: 700; letter-spacing: .02em; color: #fff;
+}
+.lyr-window {
+  position: absolute; left: 0; right: 0; top: calc(52 * var(--u)); bottom: 0; overflow: hidden;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 calc(12 * var(--u)), #000 72%, transparent 100%);
+          mask-image: linear-gradient(180deg, transparent 0, #000 calc(12 * var(--u)), #000 72%, transparent 100%);
+}
+.lyr-list { padding: calc(12 * var(--u)) calc(29 * var(--u)) 0; transition: transform .7s cubic-bezier(.22, .8, .24, 1); }
+.lyr-list p {
+  font-size: calc(30 * var(--u)); line-height: calc(46 * var(--u)); font-weight: 400; letter-spacing: .005em;
+  color: var(--lyric); opacity: .32; transition: opacity .6s ease;
+}
+.lyr-list p.next { opacity: .62; }
+.lyr-list p.on { opacity: 1; }
+.lyr-list p.past { opacity: .22; }
+.lyr-list p.break { letter-spacing: .3em; }
+.snap, .snap * { transition: none !important; }
+
+.titles { flex: 0 0 auto; margin-top: calc(50 * var(--u)); text-align: center; width: 100%; padding: 0 calc(16 * var(--u)); }
+.titles h1 { font-size: calc(44 * var(--u)); line-height: calc(52 * var(--u)); font-weight: 500; letter-spacing: .005em; white-space: nowrap; }
+.titles p { margin-top: calc(10 * var(--u)); font-size: calc(26 * var(--u)); line-height: calc(32 * var(--u)); color: var(--mute); }
+
+.controls {
+  flex: 0 0 auto; margin-top: auto; padding-top: calc(28 * var(--u));
+  display: flex; align-items: center; gap: calc(41 * var(--u));
+}
+.controls .ic svg { width: calc(26 * var(--u)); height: calc(26 * var(--u)); }
+.play {
+  width: calc(78 * var(--u)); height: calc(78 * var(--u)); border-radius: 50%; background: var(--accent);
+  box-shadow: 0 0 calc(47 * var(--u)) rgba(152, 152, 152, .35);
+  transition: transform .15s;
+}
+.play:active { transform: scale(.94) !important; }
+.play svg { height: calc(33 * var(--u)); width: auto; }
+.play .i-play { margin-left: calc(5 * var(--u)); }
+.play .i-pause, .play.playing .i-play { display: none; }
+.play.playing .i-pause { display: block; }
+
+.nav {
+  flex: 0 0 calc(89 * var(--u)); width: calc(475 * var(--u)); margin-top: calc(41 * var(--u));
+  background: var(--nav); border: 1px solid rgba(255, 255, 255, .13); border-bottom: 0;
+  border-radius: calc(40 * var(--u)) calc(40 * var(--u)) 0 0;
+  display: flex; justify-content: space-around; align-items: flex-start;
+  padding: calc(30 * var(--u)) calc(14 * var(--u)) 0;
+}
+.nav svg { width: calc(30 * var(--u)); height: calc(30 * var(--u)); }
+.nav .on { color: var(--accent); }
+.nav button { color: var(--mute); }
+
+/* idle / listening message on the empty player half */
+.hint {
+  position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none;
+  font-size: calc(22 * var(--u)); color: var(--mute); letter-spacing: .01em;
+  transition: opacity .4s;
+}
+.hint span { transition: opacity .3s; }
+.found .hint, .no-hint .hint { opacity: 0; }
+
+/* ---------- reveal choreography: title → play button → rest of the UI ---------- */
+.reveal { opacity: 0; transform: translateY(calc(18 * var(--u))); transition: opacity .35s ease, transform .35s ease; }
+.play.reveal { transform: scale(.35); }
+.found .reveal {
+  opacity: 1; transform: none;
+  transition: opacity .7s ease var(--d, 0s), transform .8s cubic-bezier(.2, .9, .25, 1) var(--d, 0s);
+}
+.found .play.reveal { transition: opacity .45s ease var(--d), transform .7s cubic-bezier(.34, 1.7, .5, 1) var(--d); }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <div class="status">
+    <span class="time">9:41</span>
+    <span class="icons">
+      <svg width="18" height="11" viewBox="0 0 17.77 11.15" style="width:calc(18*var(--u));height:auto"><path fill="#fff" d="M2.09 6.97c.58 0 1.05.47 1.05 1.05v2.09c0 .58-.47 1.04-1.05 1.04H1.04C.47 11.15 0 10.68 0 10.11V8.01c0-.58.47-1.05 1.04-1.05h1.05Zm4.88-2.09c.58 0 1.05.47 1.05 1.05v4.18c0 .58-.47 1.04-1.05 1.04H5.92c-.58 0-1.04-.47-1.04-1.04V5.92c0-.58.47-1.05 1.04-1.05h1.05Zm4.88-2.44c.58 0 1.05.47 1.05 1.05v6.62c0 .58-.47 1.04-1.05 1.04H10.8c-.58 0-1.04-.47-1.04-1.04V3.48c0-.58.47-1.05 1.04-1.05h1.05ZM16.73 0c.58 0 1.04.47 1.04 1.05v9.06c0 .58-.47 1.04-1.04 1.04h-1.05c-.58 0-1.05-.47-1.05-1.04V1.05c0-.58.47-1.05 1.05-1.05h1.05Z"/></svg>
+      <svg width="16" height="11.5" viewBox="0 0 16.03 11.5" style="width:calc(16*var(--u));height:auto"><path fill="#fff" d="M5.7 8.81a3.6 3.6 0 0 1 4.64 0 .34.34 0 0 1 .01.48l-2.1 2.11a.33.33 0 0 1-.47 0L5.69 9.29a.34.34 0 0 1 .01-.48ZM2.9 5.99a7.5 7.5 0 0 1 10.23 0 .33.33 0 0 1 .01.48l-1.21 1.22a.33.33 0 0 1-.46.01 5.2 5.2 0 0 0-6.91 0 .33.33 0 0 1-.46-.01L2.89 6.47a.33.33 0 0 1 .01-.48ZM.1 3.18a11.4 11.4 0 0 1 15.83 0c.13.13.13.34 0 .47L14.72 4.88a.33.33 0 0 1-.46 0 9 9 0 0 0-12.5 0 .33.33 0 0 1-.45 0L.1 3.66a.33.33 0 0 1 0-.48Z"/></svg>
+      <svg width="25" height="12" viewBox="0 0 24.74 11.85" style="width:calc(25*var(--u));height:auto"><rect x=".5" y=".5" width="22" height="10.85" rx="2.17" fill="none" stroke="#fff" opacity=".35"/><path opacity=".4" fill="#fff" d="M23.69 3.83v4.18c.64-.35 1.05-1.18 1.05-2.09s-.41-1.74-1.05-2.09"/><rect x="2.09" y="2.09" width="18.82" height="7.67" rx="1.33" fill="#fff"/></svg>
+    </span>
+  </div>
+
+  <section class="listen" id="listen" aria-label="Tap to identify the song">
+    <canvas id="rings"></canvas>
+    <div class="logo" id="logo" role="button" aria-label="Snapdragon">
+      <!-- traced from the Figma frame's logo artwork -->
+      <svg viewBox="0 0 998 1000"><path fill="#fff" fill-rule="evenodd" d="M477.6 1000C462.6 999.1 429.5 995.9 420.9 994.4C399 990.5 392.8 989.3 383.1 987C212.1 945.6 77 820.9 22.5 654.3C18.8 642.8 13.5 624.1 11.9 616.2C11.2 612.7 9.8 606.6 8.8 602.5C2.4 575.5-2.1 527.8 1 520.3C3 515.4 5.5 517.3 14.3 530.6C22.8 543.6 29.9 550.8 46 562.8C76.9 585.9 110.4 601.3 164.8 617.5C182.9 622.8 180.9 622.2 202.2 630.3C283.4 661.2 333.5 724.6 340.9 805.7C343.3 832.5 350.4 821.4 357.2 780.4C361.4 755.2 361.7 732.7 358.4 713.6C357.6 709.3 356.6 702.7 356.2 699.1C349.8 647 296.7 574.5 245.3 547.5C242.6 546.1 237.5 543.1 234.1 540.9C224.6 534.9 213.4 529 178.4 511.5C96.8 470.7 67.6 439.3 53.9 377.5C48.7 354.3 49.2 310.6 54.9 291.1C55.8 287.8 57.2 282.2 58 278.6C61.9 260.7 79.6 225.4 95.7 203.6C106.8 188.6 109.1 185.8 117.4 176.7C121.9 171.7 127.8 164.9 130.5 161.6C133.1 158.4 138.9 152 143.4 147.4C165.8 124.6 172.6 124.4 167.7 146.7C161.6 174 160.7 216.9 166.2 216.9C168.5 216.9 169.2 215.8 174.6 201.9C184.5 176.9 196.2 155 208.5 138.9C284.6 38.9 421.4-14.8 555 2.8C595.3 8.1 619.8 13.4 652.9 24.2C794.8 70 909.6 178 964 316.7C971 334.6 976.8 352.3 978 359.3C978.6 362.8 980.1 368.5 981.4 371.9C985.5 382.5 988.6 396.7 993.7 427.2C999.9 464.3 999.9 535.8 993.7 572.8C987.3 610.8 982.5 630.6 972.1 661.4C919.8 815.4 794.2 935.4 637.9 980.7C617.8 986.5 583.9 993.7 566.8 995.8C532.9 999.9 502.4 1001.3 477.6 1000ZM694.6 913.9C715.1 906.8 764.9 875.4 791.5 852.8C832.8 817.6 868.5 775.8 891.8 735.3C895.5 728.9 899.5 722 900.9 720C913.1 700.8 932.8 652 941.3 619.7C956.8 560.5 960.6 510 954.1 447.2C952.3 429.3 951.1 421.4 948.9 413.2C948.2 410.5 947.2 405.7 946.8 402.4C944.4 384.2 929.7 337.3 920.7 319.2C919.4 316.7 917.4 312.2 916.4 309.3C910.8 294.6 891.1 259.8 878.3 242.1C875.3 238.1 871.3 232.5 869.4 229.8C851.3 204.6 821.7 173 798.1 153.7C793.5 150 785.5 143.5 780.4 139.3C775.3 135.1 767 129 761.9 125.6C756.8 122.3 749.9 117.7 746.7 115.5C729.9 104.1 698 86.8 681.7 80.2C677.6 78.5 671.1 75.7 667.2 74C653.2 67.7 622.5 57.5 611.8 55.7C608.7 55.1 601.5 53.6 595.8 52.2C558.8 43.4 514.6 41.1 489.2 46.5C454.2 54 450.2 55.4 430.4 66.6C407.9 79.4 390.1 100.5 382.5 123.3C381.6 126.1 380 130.6 378.9 133.3C369.4 158.2 367.4 200.8 374.4 229C387.8 282.5 420.9 313 514.4 357.8C531.9 366.2 550 374.9 554.6 377.2C559.2 379.4 564.6 381.8 566.5 382.4C572.1 384.4 605.8 401.3 613 405.8C616.7 408.1 623 411.9 627 414.3C699.1 457.3 756.7 538.6 768 613.4C768.6 617.2 769.7 623.9 770.4 628.2C774.4 650.5 775 701 771.6 717.5C770.5 722.4 769.1 731 768.3 736.7C767.6 742.4 766 750 764.9 753.7C763.8 757.3 762.5 762.4 762.1 764.9C755.6 803.5 727.6 861.5 699 895.8C682.6 915.3 681.9 918.3 694.6 913.9Z"/></svg>
+    </div>
+  </section>
+
+  <section class="player" id="player">
+    <div class="hint"><span id="hint">Tap to identify the song</span></div>
+    <div class="stage">
+      <div class="sb-space"></div>
+
+      <header class="hdr reveal" style="--d:.95s">
+        <button class="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+        <h2>Song Found</h2>
+        <button class="fav" id="fav" aria-label="Favorite"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+      </header>
+
+      <div class="card reveal" style="--d:1.05s">
+        <div class="label">LYRICS</div>
+        <div class="lyr-window"><div class="lyr-list" id="lyrics"></div></div>
+      </div>
+
+      <div class="titles">
+        <h1 class="reveal" id="title" style="--d:0s"></h1>
+        <p class="reveal" id="subtitle" style="--d:.15s"></p>
+      </div>
+
+      <div class="controls">
+        <button class="ic reveal" style="--d:1.15s" aria-label="Shuffle"><svg viewBox="0 0 24 24" fill="none" stroke="#f2f2f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg></button>
+        <button class="ic reveal" style="--d:1.2s" aria-label="Previous"><svg viewBox="0 0 24 24" fill="none" stroke="#f2f2f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg></button>
+        <button class="play reveal" id="play" style="--d:.55s" aria-label="Play">
+          <svg class="i-play" viewBox="0 0 26.9 32.94"><path fill="#fff" d="M5.43 32.45 25.09 19.6c2.42-1.39 2.42-4.88 0-6.27L5.43.49C3.02-.9 0 .84 0 3.63v25.68c0 2.79 3.02 4.53 5.43 3.14Z"/></svg>
+          <svg class="i-pause" viewBox="0 0 26 32"><rect x="2" y="1" width="8" height="30" rx="2.5" fill="#fff"/><rect x="16" y="1" width="8" height="30" rx="2.5" fill="#fff"/></svg>
+        </button>
+        <button class="ic reveal" style="--d:1.2s" aria-label="Next"><svg viewBox="0 0 24 24" fill="none" stroke="#f2f2f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg></button>
+        <button class="ic reveal" style="--d:1.25s" aria-label="Repeat"><svg viewBox="0 0 24 24" fill="none" stroke="#f2f2f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></button>
+      </div>
+
+      <nav class="nav reveal" style="--d:1.35s">
+        <button aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></button>
+        <button class="on" aria-label="Music"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></button>
+        <button aria-label="Favorites"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+        <button aria-label="Nearby"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></button>
+      </nav>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const SONG = { title: "Funiculì, Funiculà", subtitle: "Jamme Jamme · Let’s Go" };
+
+  // English lyrics (the prop's own singing translation of the public-domain 1880 song).
+  // [line, seconds on screen]; \n forces a line break. Starts at "…to see the sky!" and loops back round to it.
+  const LYRICS = [
+    ["…to see the sky!", 2.6],
+    ["Let’s go up to the top,\nlet’s go…", 3.6],
+    ["Let’s go, let’s go, up to the top, let’s go,", 3.4],
+    ["funiculì, funiculà, funiculì, funiculà,", 3.4],
+    ["up to the top, let’s go, funiculì, funiculà!", 4.2],
+    ["♪ ♪ ♪", 4.0],
+    ["Last night, Nannina, I climbed up high,", 3.6],
+    ["you know where, you know where,", 3.0],
+    ["where this ungrateful heart", 3.0],
+    ["can’t hurt me anymore, not anymore!", 3.6],
+    ["Where the fire burns, but if you run", 3.4],
+    ["it lets you be, it lets you be!", 3.0],
+    ["It won’t chase after you or wear you down", 3.6],
+    ["just by looking, just by looking.", 3.6],
+    ["Let’s go, let’s go, up to the top, let’s go,", 3.4],
+    ["let’s go, let’s go, up to the top, let’s go,", 3.4],
+    ["funiculì, funiculà, funiculì, funiculà,", 3.4],
+    ["up to the top, let’s go, funiculì, funiculà!", 4.2],
+    ["♪ ♪ ♪", 4.0],
+    ["Come on, from the ground up to the mountain", 3.6],
+    ["is only one step, only one step!", 3.0],
+    ["You can see France, Procida and Spain…", 3.6],
+    ["and I see you, I see you!", 3.0],
+    ["Pulled by the cable, quick as a word,", 3.4],
+    ["we’re climbing high, we’re climbing high…", 3.2],
+    ["We go like the wind, all of a sudden,", 3.4],
+    ["up, up we climb, up, up we climb…", 3.2],
+  ];
+
+  const q = new URLSearchParams(location.search);
+  const LISTEN_SECONDS = Math.max(1, +q.get("listen") || 4.6);   // ?listen=6
+  if (q.get("status") === "0") document.body.classList.add("no-status");
+  if (q.get("hint") === "0") document.body.classList.add("no-hint");
+
+  const $ = s => document.querySelector(s);
+  const app = $("#app"), listenEl = $("#listen"), logo = $("#logo"), canvas = $("#rings");
+  const ctx = canvas.getContext("2d");
+  const playBtn = $("#play"), hint = $("#hint"), list = $("#lyrics");
+  $("#title").textContent = SONG.title;
+  $("#subtitle").textContent = SONG.subtitle;
+
+  // ---------- layout: Figma px → screen via --u ----------
+  let U = 1, W = 0, H = 0, dpr = 1;
+  function fit() {
+    const vw = innerWidth, vh = innerHeight;
+    const stacked = vw < vh * 0.9;
+    app.classList.toggle("stacked", stacked);
+    U = stacked ? Math.min(vw / 523, (vh * 0.6) / 790) : Math.min(vw / 2 / 523, vh / 849);
+    document.documentElement.style.setProperty("--u", U + "px");
+    const r = listenEl.getBoundingClientRect();
+    dpr = Math.min(window.devicePixelRatio || 1, 3);
+    W = r.width; H = r.height;
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    dirty = true;
+    placeLyric(false);
+  }
+
+  // ---------- lyrics ----------
+  // Rendered twice so the loop can scroll past the end and snap back invisibly.
+  const N = LYRICS.length;
+  list.innerHTML = [...LYRICS, ...LYRICS].map(([t]) =>
+    `<p${t.startsWith("♪") ? ' class="break"' : ""}>${t.replace("\n", "<br>")}</p>`).join("");
+  const rows = [...list.children];
+  let pos = 0, lyricTimer = 0, lyricDue = 0, lyricLeft = 0, playing = false;
+
+  function placeLyric(animate = true) {
+    if (!animate) list.classList.add("snap");
+    rows.forEach((p, k) => {
+      p.className = (LYRICS[k % N][0].startsWith("♪") ? "break " : "") +
+        (k === pos ? "on" : k === pos + 1 ? "next" : k < pos ? "past" : "");
+    });
+    list.style.transform = `translateY(${-rows[pos].offsetTop + rows[0].offsetTop}px)`;
+    if (!animate) { list.offsetHeight; list.classList.remove("snap"); }
+  }
+  function scheduleLyric(ms) {
+    clearTimeout(lyricTimer);
+    lyricDue = performance.now() + ms;
+    lyricTimer = setTimeout(nextLyric, ms);
+  }
+  function nextLyric() {
+    pos++;
+    placeLyric(true);
+    if (pos >= N) setTimeout(() => { if (pos >= N) { pos -= N; placeLyric(false); } }, 800);
+    scheduleLyric(LYRICS[pos % N][1] * 1000);
+  }
+  function setPlaying(on) {
+    playing = on;
+    playBtn.classList.toggle("playing", on);
+    playBtn.setAttribute("aria-label", on ? "Pause" : "Play");
+    if (on) scheduleLyric(lyricLeft || LYRICS[pos % N][1] * 1000);
+    else { lyricLeft = Math.max(0, lyricDue - performance.now()); clearTimeout(lyricTimer); }
+  }
+  function resetLyrics() {
+    clearTimeout(lyricTimer); playing = false; lyricLeft = 0; pos = 0;
+    playBtn.classList.remove("playing");
+    placeLyric(false);
+  }
+
+  // ---------- flow: idle → listening → found ----------
+  let state = "idle", tStart = 0, timers = [];
+  const later = (fn, ms) => timers.push(setTimeout(fn, ms));
+
+  function listen() {
+    if (state !== "idle") return;
+    state = "listening"; tStart = performance.now(); beatClock = 0; lastBeat = -1;
+    hint.textContent = "Listening…";
+    later(found, LISTEN_SECONDS * 1000);
+  }
+  function found() {
+    state = "found";
+    app.classList.add("found");
+    // title → play button → rest of the UI, then the lyrics start
+    later(() => setPlaying(true), 1950);
+  }
+  function reset() {
+    timers.forEach(clearTimeout); timers = [];
+    state = "idle";
+    app.classList.remove("found");
+    hint.textContent = "Tap to identify the song";
+    setTimeout(resetLyrics, 350);
+  }
+
+  listenEl.addEventListener("click", () => { if (state === "idle") listen(); });
+  logo.addEventListener("click", e => { if (state !== "idle") { e.stopPropagation(); reset(); } });
+  playBtn.addEventListener("click", () => { if (state === "found") setPlaying(!playing); });
+  $("#fav").addEventListener("click", e => e.currentTarget.classList.toggle("on"));
+  addEventListener("keydown", e => {
+    const k = e.key.toLowerCase();
+    if (k === " " || k === "enter") { e.preventDefault(); state === "idle" ? listen() : state === "found" && setPlaying(!playing); }
+    else if (k === "r" || k === "escape") reset();
+  });
+
+  // Full screen on the first touch on a real device (not inside an iframe/preview).
+  addEventListener("pointerdown", function fs(e) {
+    if (e.pointerType !== "touch" || window.self !== window.top || document.fullscreenElement) return;
+    removeEventListener("pointerdown", fs);
+    document.documentElement.requestFullscreen?.({ navigationUI: "hide" }).catch(() => {});
+    navigator.wakeLock?.request("screen").catch(() => {});
+  });
+  addEventListener("contextmenu", e => e.preventDefault());
+
+  // ---------- rings + heartbeat (canvas) ----------
+  const R0 = 168, GAP = 50, LINE = 5, LOGO_R = 89.5;  // Figma px
+  const BEAT = 0.86;                                      // seconds per heartbeat
+  let phase = 0, scale = 1, glow = 0, beatClock = 0, lastBeat = -1, shocks = [], dirty = true, prev = 0;
+
+  // lub-dub envelope: quick swell then decay, second smaller beat 0.22 s later
+  const env = x => x <= 0 ? 0 : (x / 0.075) * Math.exp(1 - x / 0.075);
+  const heart = t => env(t) + 0.62 * env(t - 0.22);
+
+  function frame(now) {
+    const dt = Math.min(0.05, (now - (prev || now)) / 1000); prev = now;
+    let beat = 0;
+
+    if (state === "listening") {
+      beatClock += dt;
+      const k = Math.floor(beatClock / BEAT);
+      if (k !== lastBeat) { lastBeat = k; shocks.push({ age: 0 }); }
+      beat = heart(beatClock - k * BEAT);
+      phase += dt * (0.42 + 2.05 * beat);           // rings ride outward, surging on each beat
+      scale = 1 + 0.11 * beat;
+      glow += (beat - glow) * Math.min(1, dt * 18);
+      dirty = true;
+    } else {
+      // settle: rings glide to their resting spots, logo eases back
+      const target = Math.ceil(phase - 1e-3);
+      const ease = Math.min(1, dt * (state === "found" ? 3.2 : 4.5));
+      if (Math.abs(target - phase) > 1e-3) { phase += (target - phase) * ease; dirty = true; } else phase = target;
+      const breathe = state === "idle" ? 1 + 0.025 * Math.sin(now / 1000 * 2.2) : 1;
+      if (Math.abs(scale - breathe) > 1e-4) { scale += (breathe - scale) * Math.min(1, dt * 8); dirty = true; }
+      if (glow > 1e-3) { glow *= Math.max(0, 1 - dt * 5); dirty = true; } else glow = 0;
+    }
+    if (shocks.length) dirty = true;
+    if (phase > 1000) phase -= 1000;
+
+    if (dirty) { draw(dt); dirty = false; }
+    logo.style.transform = `scale(${scale.toFixed(4)})`;
+    requestAnimationFrame(frame);
+  }
+
+  function draw(dt) {
+    const u = U * dpr, cx = canvas.width / 2, cy = canvas.height / 2;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const maxR = Math.hypot(cx, cy) + GAP * u;
+
+    // soft glow behind the logo on each beat
+    if (glow > 0.01) {
+      const g = ctx.createRadialGradient(cx, cy, LOGO_R * u * 0.8, cx, cy, 260 * u);
+      g.addColorStop(0, `rgba(255,140,120,${0.42 * Math.min(1, glow)})`);
+      g.addColorStop(1, "rgba(255,140,120,0)");
+      ctx.fillStyle = g; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // concentric rings; at rest (integer phase) they sit exactly where the Figma frame has them
+    const frac = phase - Math.floor(phase);
+    ctx.lineWidth = LINE * u;
+    for (let k = -2; ; k++) {
+      const r = (R0 + GAP * (k + frac)) * u;
+      if (r > maxR) break;
+      // new rings fade in between R0 - GAP and R0, so at rest nothing shows inside the first ring
+      const a = Math.min(1, (r / u - (R0 - GAP)) / GAP);
+      if (a <= 0) continue;
+      ctx.strokeStyle = `rgba(134,26,33,${a})`;
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+    }
+
+    // shockwave rings released by each heartbeat
+    shocks = shocks.filter(s => (s.age += dt) < 1.9);
+    for (const s of shocks) {
+      const p = s.age / 1.9;
+      const r = (LOGO_R + 10 + 720 * (1 - Math.pow(1 - p, 2.4))) * u;
+      ctx.lineWidth = (12 - 9 * p) * u;
+      ctx.strokeStyle = `rgba(255,236,232,${0.55 * (1 - p) * (1 - p)})`;
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+    }
+  }
+
+  addEventListener("resize", fit);
+  document.fonts?.ready.then(() => placeLyric(false));
+  fit();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
