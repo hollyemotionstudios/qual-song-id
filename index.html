@@ -343,8 +343,7 @@ body:not(.show-status) .status { display: none; }
   function found() {
     state = "found";
     app.classList.add("found");
-    // title → play button → rest of the UI, then the lyrics start
-    later(() => setPlaying(true), 1950);
+    // title → play button → rest of the UI; the lyrics wait on the first line until play is tapped
   }
   function reset() {
     timers.forEach(clearTimeout); timers = [];
