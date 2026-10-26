@@ -45,7 +45,8 @@ svg { display: block; }
 .app { position: fixed; inset: 0; display: flex; }
 .app.stacked { flex-direction: column; }
 
-/* ---------- status bar (spans both halves, as in Figma) ---------- */
+/* ---------- status bar (spans both halves, as in Figma) ----------
+   Hidden by default so the device's own status bar shows; the player keeps its 44px gap for it. ?status=1 shows this mock one. */
 .status {
   position: absolute; z-index: 5; top: 0; left: 0; right: 0;
   height: calc(44 * var(--u)); padding: 0 calc(22 * var(--u)) 0 calc(20 * var(--u));
@@ -53,7 +54,7 @@ svg { display: block; }
 }
 .status .time { font-size: calc(14 * var(--u)); font-weight: 600; letter-spacing: .01em; }
 .status .icons { display: flex; align-items: center; gap: calc(5 * var(--u)); }
-.no-status .status { display: none; }
+body:not(.show-status) .status { display: none; }
 
 /* ---------- listen half ---------- */
 .listen { position: relative; flex: 1 1 50%; background: var(--red); overflow: hidden; cursor: pointer; }
@@ -74,7 +75,7 @@ svg { display: block; }
   position: relative; height: 100%; width: calc(523 * var(--u)); margin: 0 auto;
   display: flex; flex-direction: column; align-items: center;
 }
-.sb-space { flex: 0 0 calc(44 * var(--u)); }
+.sb-space { flex: 0 0 max(calc(44 * var(--u)), env(safe-area-inset-top, 0px)); }
 .stacked .sb-space { flex-basis: calc(10 * var(--u)); }
 
 .hdr {
@@ -262,7 +263,7 @@ svg { display: block; }
 
   const q = new URLSearchParams(location.search);
   const LISTEN_SECONDS = Math.max(1, +q.get("listen") || 4.6);   // ?listen=6
-  if (q.get("status") === "0") document.body.classList.add("no-status");
+  if (q.get("status") === "1") document.body.classList.add("show-status");
   if (q.get("hint") === "0") document.body.classList.add("no-hint");
 
   const $ = s => document.querySelector(s);
