@@ -11,6 +11,6 @@ Target size: Galaxy Z Fold 8 inner screen unfolded, 2448 × 1848 px, landscape. 
 ## On set
 - **Tap the red half** to listen · **tap the logo** or the **home icon** to reset · **Open song** resets to the start (after a short pop) · tap the heart to favourite
 - Keyboard: **Space** listen, then start / pause the lyrics · **R** or **Esc** reset
-- URL options: `?listen=6` listening time in seconds (default 4.6) · `?status=1` shows a mock status bar (time and connection icons; hidden by default, with space left at the top for the device's own) · `?hint=0` hides the "Tap to identify" / "Listening…" text
+- URL options: `?listen=6` listening time in seconds (default 3.9, 6 heartbeats) · `?status=1` shows a mock status bar (time and connection icons; hidden by default, with space left at the top for the device's own) · `?hint=0` hides the "Tap to identify the song" text (it fades away on its own once listening starts)
 
 Edit the title, subtitle and lyric lines (with seconds per line) in `SONG` and `LYRICS` at the top of the script.

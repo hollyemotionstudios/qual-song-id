@@ -122,8 +122,8 @@ body:not(.show-status) .status { display: none; }
 .snap, .snap * { transition: none !important; }
 
 .titles { flex: 0 0 auto; margin-top: calc(50 * var(--u)); text-align: center; width: 100%; padding: 0 calc(16 * var(--u)); }
-.titles h1 { font-size: calc(44 * var(--u)); line-height: calc(52 * var(--u)); font-weight: 500; letter-spacing: .005em; white-space: nowrap; }
-.titles p { margin-top: calc(10 * var(--u)); font-size: calc(26 * var(--u)); line-height: calc(32 * var(--u)); color: var(--soft); }
+.titles h1 { font-size: calc(44 * var(--u)); line-height: calc(52 * var(--u)); font-weight: 700; letter-spacing: .005em; white-space: nowrap; }
+.titles p { margin-top: calc(10 * var(--u)); font-size: calc(26 * var(--u)); line-height: calc(32 * var(--u)); font-weight: 700; color: var(--soft); }
 
 .controls {
   flex: 0 0 auto; margin-top: auto; padding-top: calc(28 * var(--u));
@@ -182,7 +182,7 @@ body:not(.show-status) .status { display: none; }
   transition: opacity .4s;
 }
 .hint span { transition: opacity .3s; }
-.found .hint, .no-hint .hint { opacity: 0; }
+.found .hint, .listening .hint, .no-hint .hint { opacity: 0; }   /* the hint fades away once listening starts */
 
 /* ---------- reveal choreography: header + nav → title → album cover → subtitle → Open song ---------- */
 .reveal { opacity: 0; transform: translateY(calc(18 * var(--u))); transition: opacity .35s ease, transform .35s ease; }
@@ -297,7 +297,7 @@ body:not(.show-status) .status { display: none; }
   ];
 
   const q = new URLSearchParams(location.search);
-  const LISTEN_SECONDS = Math.max(1, +q.get("listen") || 4.6);   // ?listen=6
+  const LISTEN_SECONDS = Math.max(1, +q.get("listen") || 3.9);   // 6 heartbeats; ?listen=6
   if (q.get("status") === "1") document.body.classList.add("show-status");
   if (q.get("hint") === "0") document.body.classList.add("no-hint");
 
@@ -378,7 +378,7 @@ body:not(.show-status) .status { display: none; }
   function listen() {
     if (state !== "idle") return;
     state = "listening"; tStart = performance.now(); beatClock = 0;
-    hint.textContent = "Listening…";
+    app.classList.add("listening");
     later(found, LISTEN_SECONDS * 1000);
   }
   function found() {
@@ -389,8 +389,7 @@ body:not(.show-status) .status { display: none; }
   function reset() {
     timers.forEach(clearTimeout); timers = [];
     state = "idle";
-    app.classList.remove("found");
-    hint.textContent = "Tap to identify the song";
+    app.classList.remove("found", "listening");
     setTimeout(resetLyrics, 350);
   }
 
@@ -428,12 +427,12 @@ body:not(.show-status) .status { display: none; }
 
   // ---------- rings + heartbeat (canvas) ----------
   const R0 = 168, GAP = 50, LINE = 5;  // Figma px
-  const BEAT = 0.86;                                      // seconds per heartbeat
+  const BEAT = 0.72;                                      // seconds per heartbeat
   let phase = 0, scale = 1, beatClock = 0, dirty = true, prev = 0;
 
-  // lub-dub envelope: quick swell then decay, second smaller beat 0.22 s later
+  // lub-dub envelope: quick swell then decay, second smaller beat 0.19 s later
   const env = x => x <= 0 ? 0 : (x / 0.075) * Math.exp(1 - x / 0.075);
-  const heart = t => env(t) + 0.62 * env(t - 0.22);
+  const heart = t => env(t) + 0.7 * env(t - 0.19);
 
   function frame(now) {
     const dt = Math.min(0.05, (now - (prev || now)) / 1000); prev = now;
@@ -443,8 +442,8 @@ body:not(.show-status) .status { display: none; }
       beatClock += dt;
       const k = Math.floor(beatClock / BEAT);
       beat = heart(beatClock - k * BEAT);
-      phase += dt * (0.42 + 2.05 * beat);           // rings ride outward, surging on each beat
-      scale = 1 + 0.11 * beat;
+      phase += dt * (0.5 + 3.1 * beat);           // rings ride outward, surging on each beat
+      scale = 1 + 0.2 * beat;
       dirty = true;
     } else {
       // settle: rings glide to their resting spots, logo eases back
