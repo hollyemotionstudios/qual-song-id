@@ -149,7 +149,19 @@ body:not(.show-status) .status { display: none; }
   font-size: calc(19 * var(--u)); font-weight: 600; letter-spacing: .01em;
   box-shadow: 0 0 calc(47 * var(--u)) rgba(90, 0, 8, .35);
 }
-.open:active { transform: scale(.96) !important; }
+.open::after {   /* ring that bursts outward on tap */
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: 0 0 0 0 rgba(255, 255, 255, .7); opacity: 0;
+}
+.open { position: relative; }
+.open.pressed { transform: scale(.86) !important; background: #ffd9dc; transition: transform .08s ease, background-color .08s ease; }
+.open.tapped { animation: open-pop .5s cubic-bezier(.3, 1.6, .5, 1); }
+.open.tapped::after { animation: open-ring .55s ease-out; }
+@keyframes open-pop { 0% { transform: scale(.86); background: #ffd9dc; } 45% { transform: scale(1.12); background: #fff; } 100% { transform: scale(1); } }
+@keyframes open-ring {
+  0% { opacity: 1; box-shadow: 0 0 0 0 rgba(255, 255, 255, .75); }
+  100% { opacity: 1; box-shadow: 0 0 0 calc(26 * var(--u)) rgba(255, 255, 255, 0); }
+}
 .open svg { width: calc(19 * var(--u)); height: calc(19 * var(--u)); }
 
 .nav {
@@ -372,7 +384,7 @@ body:not(.show-status) .status { display: none; }
   function found() {
     state = "found";
     app.classList.add("found");
-    // header + nav → title → album cover → subtitle → Open song; the lyrics wait until Open song is tapped
+    // header + nav → title → album cover → subtitle → Open song
   }
   function reset() {
     timers.forEach(clearTimeout); timers = [];
@@ -386,8 +398,18 @@ body:not(.show-status) .status { display: none; }
   logo.addEventListener("click", e => { if (state !== "idle") { e.stopPropagation(); reset(); } });
   $("#home").addEventListener("click", () => { if (state !== "idle") reset(); });
   playBtn.addEventListener("click", () => { if (state === "found") setPlaying(!playing); });
-  // "Open song" starts the lyrics (Space still pauses and resumes them)
-  $("#open").addEventListener("click", () => { if (state === "found" && !playing) setPlaying(true); });
+  // "Open song" squashes while held, pops with a burst ring when tapped, then resets the prototype
+  const openBtn = $("#open");
+  const unpress = () => openBtn.classList.remove("pressed");
+  openBtn.addEventListener("pointerdown", () => { if (state === "found") openBtn.classList.add("pressed"); });
+  ["pointerup", "pointercancel", "pointerleave"].forEach(ev => openBtn.addEventListener(ev, unpress));
+  openBtn.addEventListener("click", () => {
+    if (state !== "found" || openBtn.classList.contains("tapped")) return;
+    unpress();
+    openBtn.classList.add("tapped");
+    later(reset, 550);
+  });
+  openBtn.addEventListener("animationend", e => { if (e.animationName === "open-pop") openBtn.classList.remove("tapped"); });
   $("#fav").addEventListener("click", e => e.currentTarget.classList.toggle("on"));
   addEventListener("keydown", e => {
     const k = e.key.toLowerCase();
