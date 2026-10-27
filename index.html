@@ -276,6 +276,7 @@ body:not(.show-status) .status { display: none; }
   $("#subtitle").textContent = SONG.subtitle;
 
   // ---------- layout: Figma px → screen via --u ----------
+  const FADE_LEN = 120;
   let U = 1, W = 0, H = 0, CX = 0, CY = 0, FADE = [0, 0, 0, 0], dpr = 1;
   function fit() {
     const vw = innerWidth, vh = innerHeight;
@@ -288,8 +289,9 @@ body:not(.show-status) .status { display: none; }
     dpr = Math.min(window.devicePixelRatio || 1, 3);
     W = innerWidth; H = innerHeight;
     CX = r.left + r.width / 2; CY = r.top + r.height / 2;
-    // the rings fade out beyond the centre line (the listen half's far edge)
-    FADE = stacked ? [0, r.bottom, 0, H] : [r.right, 0, W, 0];
+    // the rings fade out just past the centre line (the listen half's far edge), gone FADE_LEN Figma px later
+    const len = FADE_LEN * U;
+    FADE = stacked ? [0, r.bottom, 0, r.bottom + len] : [r.right, 0, r.right + len, 0];
     canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
     dirty = true;
     placeLyric(false);
