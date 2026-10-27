@@ -133,6 +133,17 @@ body:not(.show-status) .status { display: none; }
 .play .i-play { margin-left: calc(5 * var(--u)); }
 .play .i-pause, .play.playing .i-play { display: none; }
 .play.playing .i-pause { display: block; }
+/* the transport (shuffle, previous, play/pause, next, repeat) is hidden; "Open song" takes its place */
+.controls > :not(.open) { display: none; }
+.open {
+  display: flex; align-items: center; gap: calc(9 * var(--u));
+  height: calc(54 * var(--u)); padding: 0 calc(26 * var(--u)) 0 calc(30 * var(--u)); border-radius: calc(27 * var(--u));
+  background: #fff; color: var(--red);
+  font-size: calc(19 * var(--u)); font-weight: 600; letter-spacing: .01em;
+  box-shadow: 0 0 calc(47 * var(--u)) rgba(90, 0, 8, .35);
+}
+.open:active { transform: scale(.96) !important; }
+.open svg { width: calc(19 * var(--u)); height: calc(19 * var(--u)); }
 
 .nav {
   flex: 0 0 calc(89 * var(--u)); width: calc(475 * var(--u)); margin-top: calc(41 * var(--u));
@@ -214,6 +225,7 @@ body:not(.show-status) .status { display: none; }
           <svg class="i-pause" viewBox="0 0 26 32"><rect x="2" y="1" width="8" height="30" rx="2.5" fill="#e71324"/><rect x="16" y="1" width="8" height="30" rx="2.5" fill="#e71324"/></svg>
         </button>
         <button class="ic reveal" style="--d:1.2s" aria-label="Next"><svg viewBox="0 0 24 24" fill="none" stroke="#f2f2f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg></button>
+        <button class="open reveal" id="open" style="--d:.55s">Open song<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></button>
         <button class="ic reveal" style="--d:1.25s" aria-label="Repeat"><svg viewBox="0 0 24 24" fill="none" stroke="#f2f2f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></button>
       </div>
 
@@ -229,7 +241,7 @@ body:not(.show-status) .status { display: none; }
 
 <script>
 (() => {
-  const SONG = { title: "Funiculì, Funiculà", subtitle: "Let’s Go" };
+  const SONG = { title: "Funiculì, Funiculà", subtitle: "Let’s Go to the Top" };
 
   // English lyrics (the prop's own singing translation of the public-domain 1880 song).
   // [line, seconds on screen]; \n forces a line break. Starts at "…to see the sky!" and loops back round to it.
@@ -276,7 +288,7 @@ body:not(.show-status) .status { display: none; }
   $("#subtitle").textContent = SONG.subtitle;
 
   // ---------- layout: Figma px → screen via --u ----------
-  const FADE_LEN = 120;
+  const FADE_LEN = 260;
   let U = 1, W = 0, H = 0, CX = 0, CY = 0, FADE = [0, 0, 0, 0], dpr = 1;
   function fit() {
     const vw = innerWidth, vh = innerHeight;
@@ -365,6 +377,8 @@ body:not(.show-status) .status { display: none; }
   logo.addEventListener("click", e => { if (state !== "idle") { e.stopPropagation(); reset(); } });
   $("#home").addEventListener("click", () => { if (state !== "idle") reset(); });
   playBtn.addEventListener("click", () => { if (state === "found") setPlaying(!playing); });
+  // "Open song" starts the lyrics (Space still pauses and resumes them)
+  $("#open").addEventListener("click", () => { if (state === "found" && !playing) setPlaying(true); });
   $("#fav").addEventListener("click", e => e.currentTarget.classList.toggle("on"));
   addEventListener("keydown", e => {
     const k = e.key.toLowerCase();
