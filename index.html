@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta name="theme-color" content="#141112">
+<meta name="theme-color" content="#e71324">
 <title>Song ID Fold</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -20,9 +20,9 @@
 */
 :root {
   --u: 1px;
-  --red: #d43331;      /* listen half */
+  --red: #e71324;      /* whole background */
   --ring: #861a21;     /* concentric rings */
-  --night: #141112;    /* player half */
+  --soft: rgba(255, 255, 255, .74);   /* secondary text and icons on red */
   --nav: #090909;
   --accent: #e92626;   /* play button, active tab */
   --ink: #f2f2f2;
@@ -30,7 +30,7 @@
   --lyric: #f6eaea;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; background: var(--night); overflow: hidden; }
+html, body { height: 100%; background: var(--red); overflow: hidden; }
 body {
   font-family: Inter, "Helvetica Neue", Roboto, Arial, sans-serif;
   color: var(--ink);
@@ -57,9 +57,10 @@ svg { display: block; }
 body:not(.show-status) .status { display: none; }
 
 /* ---------- listen half ---------- */
-.listen { position: relative; flex: 1 1 50%; background: var(--red); overflow: hidden; cursor: pointer; }
+.listen { position: relative; flex: 1 1 50%; overflow: hidden; cursor: pointer; }
 .stacked .listen { flex: 0 0 40%; }
-.listen canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* the rings canvas spans the whole screen, so the rings run on behind the player half */
+#rings { position: absolute; inset: 0; width: 100%; height: 100%; }
 .logo {
   position: absolute; left: 50%; top: 50%;
   width: calc(179 * var(--u)); height: calc(179 * var(--u));
@@ -69,7 +70,7 @@ body:not(.show-status) .status { display: none; }
 .logo svg { width: 100%; height: 100%; filter: drop-shadow(0 0 calc(6 * var(--u)) rgba(90, 0, 0, .25)); }
 
 /* ---------- player half ---------- */
-.player { position: relative; flex: 1 1 50%; background: var(--night); overflow: hidden; }
+.player { position: relative; flex: 1 1 50%; overflow: hidden; }
 .stacked .player { flex: 1 1 60%; }
 .stage {
   position: relative; height: 100%; width: calc(523 * var(--u)); margin: 0 auto;
@@ -85,8 +86,8 @@ body:not(.show-status) .status { display: none; }
 .hdr h2 { text-align: center; font-size: calc(18 * var(--u)); font-weight: 400; color: #e4e4e4; letter-spacing: .01em; }
 .hdr .back svg { width: calc(22 * var(--u)); height: calc(22 * var(--u)); }
 .hdr .fav svg { width: calc(24 * var(--u)); height: calc(24 * var(--u)); }
-.hdr .fav path { fill: var(--mute); stroke: var(--mute); transition: fill .25s, stroke .25s; }
-.hdr .fav.on path { fill: var(--accent); stroke: var(--accent); }
+.hdr .fav path { fill: var(--soft); stroke: transparent; transition: fill .25s, stroke .25s; }
+.hdr .fav.on path { fill: #fff; stroke: #fff; }
 
 .card {
   position: relative; flex: 0 0 calc(280 * var(--u)); width: calc(437 * var(--u)); margin-top: calc(55 * var(--u));
@@ -115,7 +116,7 @@ body:not(.show-status) .status { display: none; }
 
 .titles { flex: 0 0 auto; margin-top: calc(50 * var(--u)); text-align: center; width: 100%; padding: 0 calc(16 * var(--u)); }
 .titles h1 { font-size: calc(44 * var(--u)); line-height: calc(52 * var(--u)); font-weight: 500; letter-spacing: .005em; white-space: nowrap; }
-.titles p { margin-top: calc(10 * var(--u)); font-size: calc(26 * var(--u)); line-height: calc(32 * var(--u)); color: var(--mute); }
+.titles p { margin-top: calc(10 * var(--u)); font-size: calc(26 * var(--u)); line-height: calc(32 * var(--u)); color: var(--soft); }
 
 .controls {
   flex: 0 0 auto; margin-top: auto; padding-top: calc(28 * var(--u));
@@ -123,8 +124,8 @@ body:not(.show-status) .status { display: none; }
 }
 .controls .ic svg { width: calc(26 * var(--u)); height: calc(26 * var(--u)); }
 .play {
-  width: calc(78 * var(--u)); height: calc(78 * var(--u)); border-radius: 50%; background: var(--accent);
-  box-shadow: 0 0 calc(47 * var(--u)) rgba(152, 152, 152, .35);
+  width: calc(78 * var(--u)); height: calc(78 * var(--u)); border-radius: 50%; background: #fff;
+  box-shadow: 0 0 calc(47 * var(--u)) rgba(90, 0, 8, .35);
   transition: transform .15s;
 }
 .play:active { transform: scale(.94) !important; }
@@ -147,7 +148,7 @@ body:not(.show-status) .status { display: none; }
 /* idle / listening message on the empty player half */
 .hint {
   position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none;
-  font-size: calc(22 * var(--u)); color: var(--mute); letter-spacing: .01em;
+  font-size: calc(22 * var(--u)); color: var(--soft); letter-spacing: .01em;
   transition: opacity .4s;
 }
 .hint span { transition: opacity .3s; }
@@ -175,8 +176,9 @@ body:not(.show-status) .status { display: none; }
     </span>
   </div>
 
+  <canvas id="rings"></canvas>
+
   <section class="listen" id="listen" aria-label="Tap to identify the song">
-    <canvas id="rings"></canvas>
     <div class="logo" id="logo" role="button" aria-label="Snapdragon">
       <!-- traced from the Figma frame's logo artwork -->
       <svg viewBox="0 0 998 1000"><path fill="#fff" fill-rule="evenodd" d="M477.6 1000C462.6 999.1 429.5 995.9 420.9 994.4C399 990.5 392.8 989.3 383.1 987C212.1 945.6 77 820.9 22.5 654.3C18.8 642.8 13.5 624.1 11.9 616.2C11.2 612.7 9.8 606.6 8.8 602.5C2.4 575.5-2.1 527.8 1 520.3C3 515.4 5.5 517.3 14.3 530.6C22.8 543.6 29.9 550.8 46 562.8C76.9 585.9 110.4 601.3 164.8 617.5C182.9 622.8 180.9 622.2 202.2 630.3C283.4 661.2 333.5 724.6 340.9 805.7C343.3 832.5 350.4 821.4 357.2 780.4C361.4 755.2 361.7 732.7 358.4 713.6C357.6 709.3 356.6 702.7 356.2 699.1C349.8 647 296.7 574.5 245.3 547.5C242.6 546.1 237.5 543.1 234.1 540.9C224.6 534.9 213.4 529 178.4 511.5C96.8 470.7 67.6 439.3 53.9 377.5C48.7 354.3 49.2 310.6 54.9 291.1C55.8 287.8 57.2 282.2 58 278.6C61.9 260.7 79.6 225.4 95.7 203.6C106.8 188.6 109.1 185.8 117.4 176.7C121.9 171.7 127.8 164.9 130.5 161.6C133.1 158.4 138.9 152 143.4 147.4C165.8 124.6 172.6 124.4 167.7 146.7C161.6 174 160.7 216.9 166.2 216.9C168.5 216.9 169.2 215.8 174.6 201.9C184.5 176.9 196.2 155 208.5 138.9C284.6 38.9 421.4-14.8 555 2.8C595.3 8.1 619.8 13.4 652.9 24.2C794.8 70 909.6 178 964 316.7C971 334.6 976.8 352.3 978 359.3C978.6 362.8 980.1 368.5 981.4 371.9C985.5 382.5 988.6 396.7 993.7 427.2C999.9 464.3 999.9 535.8 993.7 572.8C987.3 610.8 982.5 630.6 972.1 661.4C919.8 815.4 794.2 935.4 637.9 980.7C617.8 986.5 583.9 993.7 566.8 995.8C532.9 999.9 502.4 1001.3 477.6 1000ZM694.6 913.9C715.1 906.8 764.9 875.4 791.5 852.8C832.8 817.6 868.5 775.8 891.8 735.3C895.5 728.9 899.5 722 900.9 720C913.1 700.8 932.8 652 941.3 619.7C956.8 560.5 960.6 510 954.1 447.2C952.3 429.3 951.1 421.4 948.9 413.2C948.2 410.5 947.2 405.7 946.8 402.4C944.4 384.2 929.7 337.3 920.7 319.2C919.4 316.7 917.4 312.2 916.4 309.3C910.8 294.6 891.1 259.8 878.3 242.1C875.3 238.1 871.3 232.5 869.4 229.8C851.3 204.6 821.7 173 798.1 153.7C793.5 150 785.5 143.5 780.4 139.3C775.3 135.1 767 129 761.9 125.6C756.8 122.3 749.9 117.7 746.7 115.5C729.9 104.1 698 86.8 681.7 80.2C677.6 78.5 671.1 75.7 667.2 74C653.2 67.7 622.5 57.5 611.8 55.7C608.7 55.1 601.5 53.6 595.8 52.2C558.8 43.4 514.6 41.1 489.2 46.5C454.2 54 450.2 55.4 430.4 66.6C407.9 79.4 390.1 100.5 382.5 123.3C381.6 126.1 380 130.6 378.9 133.3C369.4 158.2 367.4 200.8 374.4 229C387.8 282.5 420.9 313 514.4 357.8C531.9 366.2 550 374.9 554.6 377.2C559.2 379.4 564.6 381.8 566.5 382.4C572.1 384.4 605.8 401.3 613 405.8C616.7 408.1 623 411.9 627 414.3C699.1 457.3 756.7 538.6 768 613.4C768.6 617.2 769.7 623.9 770.4 628.2C774.4 650.5 775 701 771.6 717.5C770.5 722.4 769.1 731 768.3 736.7C767.6 742.4 766 750 764.9 753.7C763.8 757.3 762.5 762.4 762.1 764.9C755.6 803.5 727.6 861.5 699 895.8C682.6 915.3 681.9 918.3 694.6 913.9Z"/></svg>
@@ -208,8 +210,8 @@ body:not(.show-status) .status { display: none; }
         <button class="ic reveal" style="--d:1.15s" aria-label="Shuffle"><svg viewBox="0 0 24 24" fill="none" stroke="#f2f2f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg></button>
         <button class="ic reveal" style="--d:1.2s" aria-label="Previous"><svg viewBox="0 0 24 24" fill="none" stroke="#f2f2f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg></button>
         <button class="play reveal" id="play" style="--d:.55s" aria-label="Play">
-          <svg class="i-play" viewBox="0 0 26.9 32.94"><path fill="#fff" d="M5.43 32.45 25.09 19.6c2.42-1.39 2.42-4.88 0-6.27L5.43.49C3.02-.9 0 .84 0 3.63v25.68c0 2.79 3.02 4.53 5.43 3.14Z"/></svg>
-          <svg class="i-pause" viewBox="0 0 26 32"><rect x="2" y="1" width="8" height="30" rx="2.5" fill="#fff"/><rect x="16" y="1" width="8" height="30" rx="2.5" fill="#fff"/></svg>
+          <svg class="i-play" viewBox="0 0 26.9 32.94"><path fill="#e71324" d="M5.43 32.45 25.09 19.6c2.42-1.39 2.42-4.88 0-6.27L5.43.49C3.02-.9 0 .84 0 3.63v25.68c0 2.79 3.02 4.53 5.43 3.14Z"/></svg>
+          <svg class="i-pause" viewBox="0 0 26 32"><rect x="2" y="1" width="8" height="30" rx="2.5" fill="#e71324"/><rect x="16" y="1" width="8" height="30" rx="2.5" fill="#e71324"/></svg>
         </button>
         <button class="ic reveal" style="--d:1.2s" aria-label="Next"><svg viewBox="0 0 24 24" fill="none" stroke="#f2f2f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg></button>
         <button class="ic reveal" style="--d:1.25s" aria-label="Repeat"><svg viewBox="0 0 24 24" fill="none" stroke="#f2f2f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></button>
@@ -274,16 +276,18 @@ body:not(.show-status) .status { display: none; }
   $("#subtitle").textContent = SONG.subtitle;
 
   // ---------- layout: Figma px → screen via --u ----------
-  let U = 1, W = 0, H = 0, dpr = 1;
+  let U = 1, W = 0, H = 0, CX = 0, CY = 0, dpr = 1;
   function fit() {
     const vw = innerWidth, vh = innerHeight;
     const stacked = vw < vh * 0.9;
     app.classList.toggle("stacked", stacked);
     U = stacked ? Math.min(vw / 523, (vh * 0.6) / 790) : Math.min(vw / 2 / 523, vh / 849);
     document.documentElement.style.setProperty("--u", U + "px");
+    // rings are centred on the listen half but drawn across the whole screen
     const r = listenEl.getBoundingClientRect();
     dpr = Math.min(window.devicePixelRatio || 1, 3);
-    W = r.width; H = r.height;
+    W = innerWidth; H = innerHeight;
+    CX = r.left + r.width / 2; CY = r.top + r.height / 2;
     canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
     dirty = true;
     placeLyric(false);
@@ -413,9 +417,9 @@ body:not(.show-status) .status { display: none; }
   }
 
   function draw(dt) {
-    const u = U * dpr, cx = canvas.width / 2, cy = canvas.height / 2;
+    const u = U * dpr, cx = CX * dpr, cy = CY * dpr;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const maxR = Math.hypot(cx, cy) + GAP * u;
+    const maxR = Math.hypot(Math.max(cx, canvas.width - cx), Math.max(cy, canvas.height - cy)) + GAP * u;
 
     // soft glow behind the logo on each beat
     if (glow > 0.01) {
