@@ -377,7 +377,7 @@ body:not(.show-status) .status { display: none; }
 
   function listen() {
     if (state !== "idle") return;
-    state = "listening"; tStart = performance.now(); beatClock = 0; lastBeat = -1;
+    state = "listening"; tStart = performance.now(); beatClock = 0;
     hint.textContent = "Listening…";
     later(found, LISTEN_SECONDS * 1000);
   }
@@ -427,9 +427,9 @@ body:not(.show-status) .status { display: none; }
   addEventListener("contextmenu", e => e.preventDefault());
 
   // ---------- rings + heartbeat (canvas) ----------
-  const R0 = 168, GAP = 50, LINE = 5, LOGO_R = 89.5;  // Figma px
+  const R0 = 168, GAP = 50, LINE = 5;  // Figma px
   const BEAT = 0.86;                                      // seconds per heartbeat
-  let phase = 0, scale = 1, glow = 0, beatClock = 0, lastBeat = -1, shocks = [], dirty = true, prev = 0;
+  let phase = 0, scale = 1, beatClock = 0, dirty = true, prev = 0;
 
   // lub-dub envelope: quick swell then decay, second smaller beat 0.22 s later
   const env = x => x <= 0 ? 0 : (x / 0.075) * Math.exp(1 - x / 0.075);
@@ -442,11 +442,9 @@ body:not(.show-status) .status { display: none; }
     if (state === "listening") {
       beatClock += dt;
       const k = Math.floor(beatClock / BEAT);
-      if (k !== lastBeat) { lastBeat = k; shocks.push({ age: 0 }); }
       beat = heart(beatClock - k * BEAT);
       phase += dt * (0.42 + 2.05 * beat);           // rings ride outward, surging on each beat
       scale = 1 + 0.11 * beat;
-      glow += (beat - glow) * Math.min(1, dt * 18);
       dirty = true;
     } else {
       // settle: rings glide to their resting spots, logo eases back
@@ -455,9 +453,7 @@ body:not(.show-status) .status { display: none; }
       if (Math.abs(target - phase) > 1e-3) { phase += (target - phase) * ease; dirty = true; } else phase = target;
       const breathe = state === "idle" ? 1 + 0.025 * Math.sin(now / 1000 * 2.2) : 1;
       if (Math.abs(scale - breathe) > 1e-4) { scale += (breathe - scale) * Math.min(1, dt * 8); dirty = true; }
-      if (glow > 1e-3) { glow *= Math.max(0, 1 - dt * 5); dirty = true; } else glow = 0;
     }
-    if (shocks.length) dirty = true;
     if (phase > 1000) phase -= 1000;
 
     if (dirty) { draw(dt); dirty = false; }
@@ -470,14 +466,6 @@ body:not(.show-status) .status { display: none; }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const maxR = Math.hypot(Math.max(cx, canvas.width - cx), Math.max(cy, canvas.height - cy)) + GAP * u;
 
-    // soft glow behind the logo on each beat
-    if (glow > 0.01) {
-      const g = ctx.createRadialGradient(cx, cy, LOGO_R * u * 0.8, cx, cy, 260 * u);
-      g.addColorStop(0, `rgba(255,140,120,${0.42 * Math.min(1, glow)})`);
-      g.addColorStop(1, "rgba(255,140,120,0)");
-      ctx.fillStyle = g; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-
     // concentric rings; at rest (integer phase) they sit exactly where the Figma frame has them
     const frac = phase - Math.floor(phase);
     ctx.lineWidth = LINE * u;
@@ -488,16 +476,6 @@ body:not(.show-status) .status { display: none; }
       const a = Math.min(1, (r / u - (R0 - GAP)) / GAP);
       if (a <= 0) continue;
       ctx.strokeStyle = `rgba(134,26,33,${a})`;
-      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
-    }
-
-    // shockwave rings released by each heartbeat
-    shocks = shocks.filter(s => (s.age += dt) < 1.9);
-    for (const s of shocks) {
-      const p = s.age / 1.9;
-      const r = (LOGO_R + 10 + 720 * (1 - Math.pow(1 - p, 2.4))) * u;
-      ctx.lineWidth = (12 - 9 * p) * u;
-      ctx.strokeStyle = `rgba(255,236,232,${0.55 * (1 - p) * (1 - p)})`;
       ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
     }
 
